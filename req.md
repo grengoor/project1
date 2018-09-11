@@ -34,13 +34,13 @@
 
 - [x] It will have these registers:  PC, SP, IR, AC, X, Y.
 - [x] It will support the instructions shown on the next page of this document.
-- [ ] It will run the user program at address 0.
-- [ ] Instructions are fetched into the IR from memory.  The operand can be fetched into a local variable.
-- [ ] Each instruction should be executed before the next instruction is fetched.
+- [x] It will run the user program at address 0.
+- [x] Instructions are fetched into the IR from memory.  The operand can be fetched into a local variable.
+- [x] Each instruction should be executed before the next instruction is fetched.
 - [ ] The user stack resides at the end of user memory and grows down toward address 0.
 - [ ] The system stack resides at the end of system memory and grows down toward address 0.
 - [ ] There is no hardware enforcement of stack size.
-- [ ] The program ends when the End instruction is executed.  The 2 processes should end at that time.
+- [x] The program ends when the End instruction is executed.  The 2 processes should end at that time.
 - [ ] The user program cannot access system memory (exits with error message).
 
 ### Memory
@@ -49,7 +49,7 @@
 - [x] It will support two operations:
   - [x] read(address) - returns the value at the address
   - [x] write(address, data) - writes the data to the address
-- [ ] Memory will initialize itself by reading a program file.
+- [x] Memory will initialize itself by reading a program file.
 - Note that the memory is simply storage; it has no real logic beyond reading and writing.
 
 ### Timer

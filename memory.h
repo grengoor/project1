@@ -49,7 +49,6 @@ public:
             return;
         }
 
-        /* TODO: Fix bug where the last line is read twice */
         while (!feof(file) && i != SYSTEM_BEGIN) {
             const int SIZE = 100;
             char str[SIZE];

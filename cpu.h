@@ -30,7 +30,9 @@ private:
     reg_t x;
     reg_t y;
 
-    int port; /* TODO: What??? */
+    int interrupt_value;
+
+    int port = 1; /* TODO: What??? */
 
     /* Read memory from pipe_r, write commands to pipe_w */
     FILE *pipe_r = nullptr, *pipe_w = nullptr;
@@ -319,7 +321,8 @@ public:
         opcode_to_instruction1[INT]                    = [=](operand_t x) { int_f(x); };
     }
 
-    CPU(int interrput, int pipe_r_fd, int pipe_w_fd) {
+    CPU(int interrupt, int pipe_r_fd, int pipe_w_fd)
+            : interrupt_value{interrupt} {
         pipe_r = fdopen(pipe_r_fd, "r");
         pipe_w = fdopen(pipe_w_fd, "w");
         if (!(pipe_r && pipe_w)) {
@@ -371,10 +374,6 @@ public:
             }
         } else {
             _pid = -1;
-            std::cout << read_mem(0) << '\n';
-            std::cout << read_mem(1) << '\n';
-            std::cout << read_mem(2) << '\n';
-            std::cout << read_mem(3) << '\n';
             while (do_command());
         }
         return 0;
