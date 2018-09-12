@@ -15,7 +15,7 @@ map<int, int> CPU::opcode_num_of_args = {
     {LOAD_SP_X, 0},
     {STORE_ADDR, 1},
     {GET, 0},
-    {PUT_PORT, 0},
+    {PUT_PORT, 1},
     {ADD_X, 0},
     {ADD_Y, 0},
     {SUB_X, 0},
@@ -35,7 +35,7 @@ map<int, int> CPU::opcode_num_of_args = {
     {DEC_X, 0},
     {PUSH, 0},
     {POP, 0},
-    {INT, 1},
+    {INT, 0},
     {IRET, 0},
     {END, 0}
 };

@@ -37,9 +37,9 @@
 - [x] It will run the user program at address 0.
 - [x] Instructions are fetched into the IR from memory.  The operand can be fetched into a local variable.
 - [x] Each instruction should be executed before the next instruction is fetched.
-- [ ] The user stack resides at the end of user memory and grows down toward address 0.
-- [ ] The system stack resides at the end of system memory and grows down toward address 0.
-- [ ] There is no hardware enforcement of stack size.
+- [x] The user stack resides at the end of user memory and grows down toward address 0.
+- [x] The system stack resides at the end of system memory and grows down toward address 0.
+- [x] There is no hardware enforcement of stack size.
 - [x] The program ends when the End instruction is executed.  The 2 processes should end at that time.
 - [ ] The user program cannot access system memory (exits with error message).
 
@@ -63,10 +63,10 @@
 - [ ] The stack pointer should be switched to the system stack.
 - [ ] SP and PC registers should be saved on the system stack.  (The handler may save additional registers).
 - [ ] A timer interrupt should cause execution at address 1000.
-- [ ] The int instruction should cause execution at address 1500.
-- [ ] The iret instruction returns from an interrupt.
-- [ ] Interrupts should be disabled during interrupt processing to avoid nested execution.
-- [ ] To make it easy, do not allow interrupts during system calls or vice versa.
+- [x] The int instruction should cause execution at address 1500.
+- [x] The iret instruction returns from an interrupt.
+- [x] Interrupts should be disabled during interrupt processing to avoid nested execution.
+- [x] To make it easy, do not allow interrupts during system calls or vice versa.
 
 ### Instruction set
 
@@ -106,12 +106,12 @@
 
 ## Input File Format
 
-Each instruction is on a separate line, with its operand (if any) on the following line.
-The instruction or operand may be followed by a comment which the loader will ignore.
-Anything following an integer is a comment, whether or not it begins with //.
-A line may be blank in which case the loader will skip it without advancing the load address.
-A line may begin by a period followed by a number which causes the loader to change the load address.
-Your program should run correctly with the any valid input files.
+- Each instruction is on a separate line, with its operand (if any) on the following line.
+- The instruction or operand may be followed by a comment which the loader will ignore.
+- Anything following an integer is a comment, whether or not it begins with //.
+- A line may be blank in which case the loader will skip it without advancing the load address.
+- A line may begin by a period followed by a number which causes the loader to change the load address.
+- Your program should run correctly with the any valid input files.
 
 
 ## Sample Programs

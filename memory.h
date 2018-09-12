@@ -5,6 +5,7 @@
 #include <iostream>
 #include <fstream>
 
+#include <cstdio>
 #include <cstring>
 
 #include <sys/types.h>
@@ -28,8 +29,13 @@ private:
 public:
     static const int USER_BEGIN = 0;
     static const int USER_END = 999;
+    static const int USER_STACK = USER_END;
     static const int SYSTEM_BEGIN = 1000;
     static const int SYSTEM_END = MEMORY_LEN - 1;
+    static const int SYSTEM_STACK = SYSTEM_END;
+
+    static const int TIMER_ADDRESS = 1000;
+    static const int INT_ADDRESS = 1500;
 
     Memory(std::string file_name, int pipe_r_fd, int pipe_w_fd) {
         pipe_r = fdopen(pipe_r_fd, "r");
@@ -54,7 +60,13 @@ public:
             char str[SIZE];
 
             fgets(str, SIZE, file);
-            memory[i++] = atoi(str);
+            if (str[0] == '\n') {
+                continue;
+            } else if (str[0] == '.') {
+                i = atoi(str + 1);
+            } else {
+                memory[i++] = atoi(str);
+            }
         }
 
         fclose(file);
@@ -73,7 +85,7 @@ public:
         char str[SIZE];
 
         fgets(str, SIZE, pipe_r);
-        std::cout << str;
+        std::cout << "MEM: " << str;
 
         if (str[0] == 'r') { /* Read */
             int address;

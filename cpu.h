@@ -16,6 +16,9 @@
 #include "memory.h"
 
 
+#define DEBUG
+
+
 /* Registers */
 class CPU {
 private:
@@ -24,15 +27,20 @@ private:
     typedef int operand_t;
 
     reg_t pc = Memory::USER_BEGIN; /* Program Counter */
-    reg_t sp = Memory::USER_END; /* Stack Pointer */
+    reg_t sp = Memory::USER_STACK; /* Stack Pointer */
     reg_t ir; /* Instruction Register */
     reg_t ac; /* Accumulator */
     reg_t x;
     reg_t y;
 
+    /* Timer interrupt occurs after every interrupt_value instructions */
     int interrupt_value;
+    /* Current timer value */
+    int current_timer = 0;
 
-    int port = 1; /* TODO: What??? */
+    enum {
+        USER, KERNEL
+    } mode = USER;
 
     /* Read memory from pipe_r, write commands to pipe_w */
     FILE *pipe_r = nullptr, *pipe_w = nullptr;
@@ -47,6 +55,12 @@ private:
         char str[SIZE];
         mem_t val;
 
+        if (mode == USER && Memory::SYSTEM_BEGIN <= address && address <= Memory::SYSTEM_END) {
+            std::cerr << "Error: user program attempted to access system memory\n";
+            end();
+            exit(1);
+        }
+
         fprintf(pipe_w, "r %d\n", address);
         fflush(pipe_w);
         fgets(str, SIZE, pipe_r);
@@ -60,14 +74,14 @@ private:
     }
 
     void push_stack(operand_t x) {
-        /* TODO: Implement */
-        std::cerr << "CPU::push_stack not yet implemented\n";
+        write_mem(sp, x);
+        sp--;
     }
 
-    operand_t pop_stack() {
-        /* TODO: Implement */
-        std::cerr << "CPU::pop_stack not yet implemented\n";
-        return -1;
+    mem_t pop_stack() {
+        mem_t val = read_mem(sp);
+        sp++;
+        return val;
     }
 
 
@@ -75,17 +89,26 @@ private:
 
     /* Load the value into the AC */
     void load_value(operand_t value) {
+        #ifdef DEBUG
+        printf("Load value %d\n", value);
+        #endif
         ac = (reg_t) value;
     }
 
     /* Load the value at the address into the AC */
     void load_addr(operand_t address) {
+        #ifdef DEBUG
+        printf("Load addr %d\n", address);
+        #endif
         ac = read_mem(address);
     }
 
     /* Load the value from the address found in the given address into the AC
      * For example, if LoadInd 500, and 500 contains 100, then load from 100 */
     void load_ind_addr(operand_t address) {
+        #ifdef DEBUG
+        printf("LoadInd addr %d\n", address);
+        #endif
         int address2 = read_mem(address);
         return load_addr(address2);
     }
@@ -93,33 +116,51 @@ private:
     /* Load the value at (address + X) into the AC
      * For example, if LoadIdxX 500, and X contains 10, then load from 510 */
     void load_idx_x_addr(operand_t address) {
+        #ifdef DEBUG
+        printf("LoadIdxX addr %d\n", address);
+        #endif
         return load_addr(address + (operand_t) x);
     }
 
     /* Load the value at (address + Y) into the AC */
     void load_idx_y_addr(operand_t address) {
+        #ifdef DEBUG
+        printf("LoadIdxY addr %d\n", address);
+        #endif
         return load_addr(address + (operand_t) y);
     }
 
     /* Load from (SP + X) into the AC
      * For example, if SP is 990, and X is 1, load from 991 */
     void load_sp_x() {
+        #ifdef DEBUG
+        printf("LoadSpX\n");
+        #endif
         return load_addr((operand_t) (sp + x));
     }
 
     /* Store the value in the AC into the address */
     void store_addr(operand_t address) {
+        #ifdef DEBUG
+        printf("Store addr %d\n", address);
+        #endif
         write_mem(address, ac);
     }
 
     /* Get a random int from 1 to 100 into the AC */
     void get() {
+        #ifdef DEBUG
+        printf("Get\n");
+        #endif
         ac = (reg_t) (std::rand() % 100 + 1);
     }
 
     /* If port = 1, write AC as an int to the screen
      * If port = 2, write AC as a char to the screen */
-    void put_port() {
+    void put_port(operand_t port) const {
+        #ifdef DEBUG
+        printf("Put port\n");
+        #endif
         if (port == 1) {
             std::cout << (int) ac << std::endl;
         } else if (port == 2) {
@@ -129,61 +170,97 @@ private:
 
     /* Add the value in X to the AC */
     void add_x() {
+        #ifdef DEBUG
+        printf("AddX\n");
+        #endif
         ac += x;
     }
 
     /* Add the value in Y to the AC */
     void add_y() {
+        #ifdef DEBUG
+        printf("AddY\n");
+        #endif
         ac += y;
     }
 
     /* Subtract the value in X to the AC */
     void sub_x() {
+        #ifdef DEBUG
+        printf("SubX\n");
+        #endif
         ac -= x;
     }
 
     /* Subtract the value in Y to the AC */
     void sub_y() {
+        #ifdef DEBUG
+        printf("SubY\n");
+        #endif
         ac -= y;
     }
 
     /* Copy the value in the AC to X */
     void copy_to_x() {
+        #ifdef DEBUG
+        printf("CopyToX\n");
+        #endif
         x = ac;
     }
 
     /* Copy the value in X to the AC */
     void copy_from_x() {
+        #ifdef DEBUG
+        printf("CopyFromX\n");
+        #endif
         ac = x;
     }
 
     /* Copy the value in the AC to Y */
     void copy_to_y() {
+        #ifdef DEBUG
+        printf("CopyToY\n");
+        #endif
         y = ac;
     }
 
     /* Copy the value in Y to the AC */
     void copy_from_y() {
+        #ifdef DEBUG
+        printf("CopyFromY\n");
+        #endif
         ac = y;
     }
 
     /* Copy the value in AC to the SP */
     void copy_to_sp() {
+        #ifdef DEBUG
+        printf("CopyToSp\n");
+        #endif
         sp = ac;
     }
 
     /* Copy the value in SP to the AC */
     void copy_from_sp() {
+        #ifdef DEBUG
+        printf("CopyFromSp\n");
+        #endif
         ac = sp;
     }
 
     /* Jump to the address */
     void jump_addr(operand_t address) {
+        #ifdef DEBUG
+        printf("Jump addr %d\n", address);
+        #endif
         pc = (reg_t) address;
     }
 
     /* Jump to the address only if the value in the AC is zero */
     void jump_if_equal_addr(operand_t address) {
+        #ifdef DEBUG
+        printf("JumpIfEqual addr %d\n", address);
+        #endif
         if (ac == 0) {
             jump_addr(address);
         }
@@ -191,6 +268,9 @@ private:
 
     /* Jump to the address only if the value in the AC is not zero */
     void jump_if_not_equal_addr(operand_t address) {
+        #ifdef DEBUG
+        printf("JumpIfNotEqual addr %d\n", address);
+        #endif
         if (ac != 0) {
             jump_addr(address);
         }
@@ -198,51 +278,95 @@ private:
 
     /* Push return address onto stack, jump to the address */
     void call_addr(operand_t address) {
+        #ifdef DEBUG
+        printf("Call addr %d\n", address);
+        #endif
         push_stack(pc);
         pc = address;
     }
 
     /* Pop return address from the stack, jump to the address */
     void ret() {
+        #ifdef DEBUG
+        printf("Ret\n");
+        #endif
         pc = pop_stack();
     }
 
     /* Increment the value in X */
     void inc_x() {
+        #ifdef DEBUG
+        printf("IncX\n");
+        #endif
         ++x;
     }
 
     /* Decrement the value in X */
     void dec_x() {
+        #ifdef DEBUG
+        printf("DecX\n");
+        #endif
         --x;
     }
 
     /* Push AC onto stack */
     void push() {
+        #ifdef DEBUG
+        printf("Push\n");
+        #endif
         push_stack(ac);
     }
 
     /* Pop from stack into AC */
     void pop() {
+        #ifdef DEBUG
+        printf("Pop\n");
+        #endif
         ac = pop_stack();
     }
 
     /* Perform system call */
-    void int_f(operand_t opcode) {
-        /* TODO: Implement */
-        std::cerr << "CPU::int_f not yet implemented\n";
+    void int_f() {
+        #ifdef DEBUG
+        printf("Int\n");
+        #endif
+        if (mode == KERNEL) {
+            return;
+        }
+        mode = KERNEL;
+        write_mem(Memory::SYSTEM_STACK, sp);
+        sp = Memory::SYSTEM_STACK - 1;
+        push_stack(pc);
+        pc = Memory::INT_ADDRESS;
     }
 
     /* Return from system call */
     void iret() {
-        /* TODO: Implement */
-        std::cerr << "CPU::iret not yet implemented\n";
+        #ifdef DEBUG
+        printf("IRet\n");
+        #endif
+        mode = USER;
+        pc = pop_stack();
+        sp = pop_stack();
     }
 
     /* End execution */
-    void end() {
+    void end() const {
+        #ifdef DEBUG
+        printf("End\n");
+        #endif
         fputs("end\n", pipe_w);
         fflush(pipe_w);
+    }
+
+    /* Like int_f, but jump to TIMER_ADDRESS instead of INT_ADDRESS and do it
+     * every interrupt_value instructions */
+    void timer_interrupt() {
+        mode = KERNEL;
+        write_mem(Memory::SYSTEM_STACK, sp);
+        sp = Memory::SYSTEM_STACK - 1;
+        push_stack(pc);
+        pc = Memory::TIMER_ADDRESS;
     }
 
     enum opcode_t {
@@ -289,7 +413,6 @@ public:
     void initialize_opcode_to_instruction() {
         opcode_to_instruction0[LOAD_SP_X]              = [=]() { load_sp_x(); };
         opcode_to_instruction0[GET]                    = [=]() { get(); };
-        opcode_to_instruction0[PUT_PORT]               = [=]() { put_port(); };
         opcode_to_instruction0[ADD_X]                  = [=]() { add_x(); };
         opcode_to_instruction0[ADD_Y]                  = [=]() { add_y(); };
         opcode_to_instruction0[SUB_X]                  = [=]() { sub_x(); };
@@ -305,6 +428,7 @@ public:
         opcode_to_instruction0[DEC_X]                  = [=]() { dec_x(); };
         opcode_to_instruction0[PUSH]                   = [=]() { push(); };
         opcode_to_instruction0[POP]                    = [=]() { pop(); };
+        opcode_to_instruction0[INT]                    = [=]() { int_f(); };
         opcode_to_instruction0[IRET]                   = [=]() { iret(); };
         opcode_to_instruction0[END]                    = [=]() { end(); };
 
@@ -314,11 +438,11 @@ public:
         opcode_to_instruction1[LOAD_IDX_X_ADDR]        = [=](operand_t x) { load_idx_x_addr(x); };
         opcode_to_instruction1[LOAD_IDX_Y_ADDR]        = [=](operand_t x) { load_idx_y_addr(x); };
         opcode_to_instruction1[STORE_ADDR]             = [=](operand_t x) { store_addr(x); };
+        opcode_to_instruction1[PUT_PORT]               = [=](operand_t x) { put_port(x); };
         opcode_to_instruction1[JUMP_ADDR]              = [=](operand_t x) { jump_addr(x); };
         opcode_to_instruction1[JUMP_IF_EQUAL_ADDR]     = [=](operand_t x) { jump_if_equal_addr(x); };
         opcode_to_instruction1[JUMP_IF_NOT_EQUAL_ADDR] = [=](operand_t x) { jump_if_not_equal_addr(x); };
         opcode_to_instruction1[CALL_ADDR]              = [=](operand_t x) { call_addr(x); };
-        opcode_to_instruction1[INT]                    = [=](operand_t x) { int_f(x); };
     }
 
     CPU(int interrupt, int pipe_r_fd, int pipe_w_fd)
@@ -351,6 +475,11 @@ public:
             int operand = read_mem(pc);
             pc++;
             opcode_to_instruction1[ir](operand);
+        }
+
+        current_timer++;
+        if (current_timer % interrupt_value == 0) {
+            timer_interrupt();
         }
 
         return true;
