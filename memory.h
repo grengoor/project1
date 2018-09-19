@@ -22,14 +22,18 @@ private:
     /* Read commands from pipe_r, write to pipe_w */
     FILE *pipe_r = nullptr, *pipe_w = nullptr;
 
+    /* PID of child process if start() forks */
     pid_t _pid = -1;
 
+    /* If false, do not call start() */
     bool _is_good = true;
 
 public:
+    /* User program */
     static const int USER_BEGIN = 0;
     static const int USER_END = 999;
     static const int USER_STACK = USER_END;
+    /* System program */
     static const int SYSTEM_BEGIN = 1000;
     static const int SYSTEM_END = MEMORY_LEN - 1;
     static const int SYSTEM_STACK = SYSTEM_END;
@@ -55,29 +59,23 @@ public:
             return;
         }
 
-        while (!feof(file) && i != SYSTEM_BEGIN) {
-            const int SIZE = 100;
-            char str[SIZE];
-
-            fgets(str, SIZE, file);
-            if (str[0] == '\n') {
-                continue;
+        const int SIZE = 100;
+        char str[SIZE];
+        while (fgets(str, SIZE, file) && i != SYSTEM_END + 1) {
+            if (isdigit(str[0])) {
+                memory[i++] = atoi(str);
+                #ifdef DEBUG
+                printf("%d: %d\n", i - 1, memory[i - 1]);
+                #endif
             } else if (str[0] == '.') {
                 i = atoi(str + 1);
-            } else {
-                memory[i++] = atoi(str);
+                #ifdef DEBUG
+                printf("JUMP TO %d\n", i);
+                #endif
             }
         }
 
         fclose(file);
-    }
-
-    mem_t read(int address) const {
-        return memory[address];
-    }
-
-    void write(int address, mem_t data) {
-        memory[address] = data;
     }
 
     bool do_command() {
@@ -85,7 +83,9 @@ public:
         char str[SIZE];
 
         fgets(str, SIZE, pipe_r);
+        #ifdef DEBUG
         std::cout << "MEM: " << str;
+        #endif
 
         if (str[0] == 'r') { /* Read */
             int address;

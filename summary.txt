@@ -1,0 +1,32 @@
+The purpose of this project is to learn how multiple processes can communicate
+and cooperate and to understand low-level concepts important to an operating
+system including processor interaction with main memory, processor instruction
+behavior, role of registers, stack processing, procedure calls, system calls,
+interrupt handling, memory protection, I/O, and virtualization/emulation.
+
+The projects main components are memory and CPU. Memory is started in a child
+process and communicates with the CPU through two pipes. The CPU pipe is
+written to by the CPU and read by memory, and the memory pipe is written to by
+memory and read by the CPU.
+
+Memory is initialized by reading from a file given on the command line. If a
+line starts with a number, then the number is written to the current memory
+address i, starting at 0, and i is incremented. If the line starts with a
+period, then i is set to the number immediately following the period. Else, the
+line is skipped.
+
+After initialization, memory's start() method is called, which creates a child
+process that continuously reads from the CPU pipe awaiting a command. If the
+command is "r" followed by a space and an address, memory writes the value
+located at that address to the memory pipe, which the CPU reads. If the command
+is "w" followed by a space, an address, another space, and a value, memory
+writes the value to the address. If the command is "end", then the child
+process terminates.
+
+The CPU continuously reads and executes instructions sequentially from memory
+starting at address 0.
+
+The project was easier and simpler than I expected it to be. The part where I
+had the most trouble is when the communication between the CPU and memory
+didn't work initially. I got it to work by flushing the output using fflush()
+every time one component wrote to a pipe.

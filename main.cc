@@ -7,6 +7,8 @@
 
 #include <sys/types.h>
 
+// #define DEBUG
+
 #include "memory.h"
 #include "cpu.h"
 

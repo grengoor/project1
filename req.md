@@ -41,7 +41,7 @@
 - [x] The system stack resides at the end of system memory and grows down toward address 0.
 - [x] There is no hardware enforcement of stack size.
 - [x] The program ends when the End instruction is executed.  The 2 processes should end at that time.
-- [ ] The user program cannot access system memory (exits with error message).
+- [x] The user program cannot access system memory (exits with error message).
 
 ### Memory
 
@@ -54,15 +54,15 @@
 
 ### Timer
 
-- [ ] A timer will interrupt the processor after every X instructions, where X is a command-line parameter.
+- [x] A timer will interrupt the processor after every X instructions, where X is a command-line parameter.
 
 ### Interrupt processing
 
-- [ ] There are two forms of interrupts:  the timer and a system call using the int instruction.
-- [ ] In both cases the CPU should enter kernel mode.
-- [ ] The stack pointer should be switched to the system stack.
-- [ ] SP and PC registers should be saved on the system stack.  (The handler may save additional registers).
-- [ ] A timer interrupt should cause execution at address 1000.
+- [x] There are two forms of interrupts: the timer and a system call using the int instruction.
+- [x] In both cases the CPU should enter kernel mode.
+- [x] The stack pointer should be switched to the system stack.
+- [x] SP and PC registers should be saved on the system stack.  (The handler may save additional registers).
+- [x] A timer interrupt should cause execution at address 1000.
 - [x] The int instruction should cause execution at address 1500.
 - [x] The iret instruction returns from an interrupt.
 - [x] Interrupts should be disabled during interrupt processing to avoid nested execution.

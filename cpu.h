@@ -16,9 +16,6 @@
 #include "memory.h"
 
 
-#define DEBUG
-
-
 /* Registers */
 class CPU {
 private:
@@ -70,18 +67,43 @@ private:
     }
 
     void write_mem(int address, int value) const {
+        if (mode == USER && Memory::SYSTEM_BEGIN <= address && address <= Memory::SYSTEM_END) {
+            std::cerr << "Error: user program attempted to access system memory\n";
+            end();
+            exit(1);
+        }
+
         fprintf(pipe_w, "w %d %d\n", address, value);
     }
 
     void push_stack(operand_t x) {
-        write_mem(sp, x);
         sp--;
+        write_mem(sp, x);
     }
 
     mem_t pop_stack() {
         mem_t val = read_mem(sp);
         sp++;
         return val;
+    }
+
+    /* Set mode to KERNEL, push SP and PC to system stack, switch PC to
+     * system stack, and jump to address (typically either Memory::INT_ADDRESS
+     * or Memory::TIMER_ADDRESS) */
+    void interrupt(operand_t address) {
+        if (mode == KERNEL) {
+            return;
+        }
+        mode = KERNEL;
+        write_mem(Memory::SYSTEM_STACK, sp);
+        sp = Memory::SYSTEM_STACK;
+        push_stack(pc);
+        pc = address;
+    }
+
+    /* Like int_f, but jump to TIMER_ADDRESS instead of INT_ADDRESS */
+    void timer_interrupt() {
+        interrupt(Memory::TIMER_ADDRESS);
     }
 
 
@@ -162,9 +184,15 @@ private:
         printf("Put port\n");
         #endif
         if (port == 1) {
-            std::cout << (int) ac << std::endl;
+            std::cout << (int) ac;
+            #ifdef DEBUG
+            std::cout << '\n';
+            #endif
         } else if (port == 2) {
-            std::cout << (char) ac << std::endl;
+            std::cout << (char) ac;
+            #ifdef DEBUG
+            std::cout << '\n';
+            #endif
         }
     }
 
@@ -330,14 +358,7 @@ private:
         #ifdef DEBUG
         printf("Int\n");
         #endif
-        if (mode == KERNEL) {
-            return;
-        }
-        mode = KERNEL;
-        write_mem(Memory::SYSTEM_STACK, sp);
-        sp = Memory::SYSTEM_STACK - 1;
-        push_stack(pc);
-        pc = Memory::INT_ADDRESS;
+        interrupt(Memory::INT_ADDRESS);
     }
 
     /* Return from system call */
@@ -345,9 +366,9 @@ private:
         #ifdef DEBUG
         printf("IRet\n");
         #endif
-        mode = USER;
         pc = pop_stack();
         sp = pop_stack();
+        mode = USER;
     }
 
     /* End execution */
@@ -357,16 +378,6 @@ private:
         #endif
         fputs("end\n", pipe_w);
         fflush(pipe_w);
-    }
-
-    /* Like int_f, but jump to TIMER_ADDRESS instead of INT_ADDRESS and do it
-     * every interrupt_value instructions */
-    void timer_interrupt() {
-        mode = KERNEL;
-        write_mem(Memory::SYSTEM_STACK, sp);
-        sp = Memory::SYSTEM_STACK - 1;
-        push_stack(pc);
-        pc = Memory::TIMER_ADDRESS;
     }
 
     enum opcode_t {
